@@ -1,39 +1,52 @@
-from django.shortcuts import render
-from django.http import Http404
-from ..models import finder, list_customers
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import redirect
+from django.urls import reverse_lazy
+from django.views import generic as gn
+
+from ..models import Customer, Advertisement
+from ..forms import CustomerForm
 
 
-def customers_list(request):
-    data = {"customers": list_customers}
-    return render(request, "customers/customers-list.html", context=data)
+class RequiredLogin(LoginRequiredMixin):
+    login_url = reverse_lazy('login')
 
 
-def get_customer(request, customer_id: int):
-    customer = finder(customer_id, list_customers)
-    if customer:
-        data = {"object": customer}
-        return render(request, "customers/customers-detail.html", context=data)
-    else:
-        raise Http404()
+class CustomerList(RequiredLogin, gn.ListView):
+    model = Customer
+    template_name = "customers/customers-list.html"
+    context_object_name = "customers"
 
 
-def delete_customer(request, customer_id: int):
-    customer = finder(customer_id, list_customers)
-    if customer:
-        data = {"object": customer}
-        return render(request, "customers/customers-delete.html", context=data)
-    else:
-        raise Http404()
+class CustomerDetail(RequiredLogin, gn.DetailView):
+    model = Customer
+    template_name = "customers/customers-detail.html"
+    pk_url_kwarg = "customer_id"
 
 
-def edit_customer(request, customer_id: int):
-    customer = finder(customer_id, list_customers)
-    if customer:
-        data = {"object": customer}
-        return render(request, "customers/customers-edit.html", context=data)
-    else:
-        raise Http404()
+class CustomerDelete(RequiredLogin, gn.DeleteView):
+    model = Customer
+    pk_url_kwarg = "customer_id"
+    template_name = "customers/customers-delete.html"
+    success_url = reverse_lazy('customers')
 
 
-def create_customer(request):
-    return render(request, "customers/customers-create.html")
+class CustomerUpdate(RequiredLogin, gn.UpdateView):
+    model = Customer
+    form_class = CustomerForm
+    pk_url_kwarg = "customer_id"
+    template_name = "customers/customers-edit.html"
+    success_url = reverse_lazy('customers')
+
+
+class CustomerCreate(RequiredLogin, gn.CreateView):
+    model = Customer
+    form_class = CustomerForm
+    template_name = "customers/customers-create.html"
+
+    def form_valid(self, form):
+        name = form.cleaned_data['lead']
+        ads = Advertisement.objects.get(leads=name)
+        ads.customers_count += 1
+        ads.save()
+        form.save()
+        return redirect('customers')

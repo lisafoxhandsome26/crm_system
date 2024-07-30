@@ -1,17 +1,34 @@
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.views import LoginView, LogoutView
 from django.shortcuts import render
-from ..models import list_customers, list_ads, list_pr, list_contracts, list_leads
+from django.urls import reverse_lazy
+from django.views import View
+from ..models import Product, Advertisement, Lead, Contract, Customer
+from ..forms import AuthForm
 
 
-def index(request):
-    data = {
-        "products_count": len(list_pr),
-        "advertisements_count": len(list_ads),
-        "leads_count": len(list_leads),
-        "customers_count": len(list_customers),
-        "contracts_count": len(list_contracts)
-    }
-    return render(request, "users/index.html", context=data)
+class RequiredLogin(LoginRequiredMixin):
+    login_url = reverse_lazy('login')
 
 
-def login(request):
-    return render(request, "registration/login.html")
+class Login(LoginView):
+    form_class = AuthForm
+    redirect_authenticated_user = True
+    template_name = 'registration/login.html'
+    next_page = reverse_lazy('index')
+
+
+class Logout(LogoutView):
+    next_page = reverse_lazy('login')
+
+
+class IndexView(RequiredLogin, View):
+    def get(self, request):
+        data = {
+            "products_count": Product.objects.count(),
+            "advertisements_count": Advertisement.objects.count(),
+            "leads_count": Lead.objects.count(),
+            "customers_count": Customer.objects.count(),
+            "contracts_count": Contract.objects.count()
+        }
+        return render(request, "users/index.html", context=data)

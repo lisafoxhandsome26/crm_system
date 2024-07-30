@@ -1,39 +1,53 @@
-from django.shortcuts import render
-from django.http import Http404
-from ..models import finder, list_leads
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import render, redirect
+from django.urls import reverse_lazy
+from django.views import View
+from django.views import generic as gn
+
+from ..models import Lead, Advertisement
+from ..forms import LeadForm
 
 
-def leads_list(request):
-    data = {"leads": list_leads}
-    return render(request, "leads/leads-list.html", context=data)
+class RequiredLogin(LoginRequiredMixin):
+    login_url = reverse_lazy('login')
 
 
-def get_lead(request, lead_id: int):
-    lead = finder(lead_id, list_leads)
-    if lead:
-        data = {"object": lead}
-        return render(request, "leads/leads-detail.html", context=data)
-    else:
-        raise Http404()
+class LeadList(RequiredLogin, gn.ListView):
+    model = Lead
+    template_name = "leads/leads-list.html"
+    context_object_name = "leads"
 
 
-def delete_lead(request, lead_id: int):
-    lead = finder(lead_id, list_leads)
-    if lead:
-        data = {"object": lead}
-        return render(request, "leads/leads-delete.html", context=data)
-    else:
-        raise Http404()
+class LeadDetail(RequiredLogin, gn.DetailView):
+    model = Lead
+    template_name = "leads/leads-detail.html"
+    pk_url_kwarg = "lead_id"
 
 
-def edit_lead(request, lead_id: int):
-    lead = finder(lead_id, list_leads)
-    if lead:
-        data = {"object": lead}
-        return render(request, "leads/leads-edit.html", context=data)
-    else:
-        raise Http404()
+class LeadDelete(RequiredLogin, gn.DeleteView):
+    model = Lead
+    pk_url_kwarg = "lead_id"
+    template_name = "leads/leads-delete.html"
+    success_url = reverse_lazy('leads')
 
 
-def create_lead(request):
-    return render(request, "leads/leads-create.html")
+class LeadUpdate(RequiredLogin, gn.UpdateView):
+    model = Lead
+    form_class = LeadForm
+    pk_url_kwarg = "lead_id"
+    template_name = "leads/leads-edit.html"
+    success_url = reverse_lazy('leads')
+
+
+class LeadCreate(RequiredLogin, gn.CreateView):
+    model = Lead
+    form_class = LeadForm
+    template_name = "leads/leads-create.html"
+
+    def form_valid(self, form):
+        ads = form.cleaned_data['ads']
+        object = Advertisement.objects.get(name=ads)
+        object.leads_count += 1
+        object.save()
+        form.save()
+        return redirect('leads')

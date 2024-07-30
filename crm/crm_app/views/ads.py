@@ -1,44 +1,49 @@
-from django.shortcuts import render
-from django.http import Http404
-from ..models import finder, list_ads
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.urls import reverse_lazy
+from django.views import generic as gn
+from ..models import Advertisement
+from ..forms import AdvertisementForm
 
 
-def advertisements_list(request):
-    data = {"ads": list_ads}
-    return render(request, "ads/ads-list.html", context=data)
+class RequiredLogin(LoginRequiredMixin):
+    login_url = reverse_lazy('login')
 
 
-def get_ads_statistic(request):
-    data = {"ads": list_ads}
-    return render(request, "ads/ads-statistic.html", context=data)
+class AdvertisementsStatistic(RequiredLogin, gn.ListView):
+    model = Advertisement
+    template_name = "ads/ads-statistic.html"
+    context_object_name = "ads"
 
 
-def get_advertisements(request, ads_id: int):
-    ads = finder(ads_id, list_ads)
-    if ads:
-        data = {"object": ads}
-        return render(request, "ads/ads-detail.html", context=data)
-    else:
-        raise Http404()
+class AdvertisementsList(RequiredLogin, gn.ListView):
+    model = Advertisement
+    template_name = "ads/ads-list.html"
+    context_object_name = "ads"
 
 
-def delete_advertisements(request, ads_id: int):
-    ads = finder(ads_id, list_ads)
-    if ads:
-        data = {"object": ads}
-        return render(request, "ads/ads-delete.html", context=data)
-    else:
-        raise Http404()
+class AdvertisementsDetail(RequiredLogin, gn.DetailView):
+    model = Advertisement
+    template_name = "ads/ads-detail.html"
+    pk_url_kwarg = "ads_id"
 
 
-def edit_advertisements(request, ads_id: int):
-    ads = finder(ads_id, list_ads)
-    if ads:
-        data = {"object": ads}
-        return render(request, "ads/ads-edit.html", context=data)
-    else:
-        raise Http404()
+class AdvertisementsDelete(RequiredLogin, gn.DeleteView):
+    model = Advertisement
+    pk_url_kwarg = "ads_id"
+    template_name = "ads/ads-delete.html"
+    success_url = reverse_lazy('ads')
 
 
-def create_advertisements(request):
-    return render(request, "ads/ads-create.html")
+class AdvertisementsCreate(RequiredLogin, gn.CreateView):
+    model = Advertisement
+    form_class = AdvertisementForm
+    template_name = "ads/ads-create.html"
+    success_url = reverse_lazy('ads')
+
+
+class AdvertisementsUpdate( gn.UpdateView):
+    model = Advertisement
+    form_class = AdvertisementForm
+    pk_url_kwarg = "ads_id"
+    template_name = "ads/ads-edit.html"
+    success_url = reverse_lazy('ads')

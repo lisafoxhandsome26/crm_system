@@ -1,39 +1,50 @@
-from django.shortcuts import render
-from django.http import Http404
-from ..models import finder, list_contracts
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.urls import reverse_lazy
+from django.views.generic import DetailView, DeleteView, CreateView, UpdateView, ListView
+from ..models import Contract
+from ..forms import ContractForm
 
 
-def contracts_list(request):
-    data = {"contracts": list_contracts}
-    return render(request, "contracts/contracts-list.html", context=data)
+class RequiredLogin(LoginRequiredMixin):
+    login_url = reverse_lazy('login')
 
 
-def get_contract(request, contract_id: int):
-    contract = finder(contract_id, list_contracts)
-    if contract:
-        data = {"object": contract}
-        return render(request, "contracts/contracts-detail.html", context=data)
-    else:
-        raise Http404()
+class ContractList(RequiredLogin, ListView):
+    model = Contract
+    template_name = "contracts/contracts-list.html"
+    context_object_name = "contracts"
 
 
-def delete_contract(request, contract_id: int):
-    contract = finder(contract_id, list_contracts)
-    if contract:
-        data = {"object": contract}
-        return render(request, "contracts/contracts-delete.html", context=data)
-    else:
-        raise Http404()
+class ContractDetail(RequiredLogin, DetailView):
+    model = Contract
+    template_name = "contracts/contracts-detail.html"
+    pk_url_kwarg = "contract_id"
 
 
-def edit_contract(request, contract_id: int):
-    contract = finder(contract_id, list_contracts)
-    if contract:
-        data = {"object": contract}
-        return render(request, "contracts/contracts-edit.html", context=data)
-    else:
-        raise Http404()
+class ContractCreate(RequiredLogin, CreateView):
+    model = Contract
+    form_class = ContractForm
+    template_name = "contracts/contracts-create.html"
+    success_url = reverse_lazy('contracts')
+
+    # def post(self, request, *args, **kwargs):
+    #     res = Contract.objects.prefetch_related('customer').prefetch_related('product').get(pk=self.pk)
+    #     ad = res.customer.lead.ads
+    #     prof = res.cost - ad.budget - res.product.cost
+    #     ad.profit += prof
+    #     ad.save()
 
 
-def create_contract(request):
-    return render(request, "contracts/contracts-create.html")
+class ContractDelete(RequiredLogin, DeleteView):
+    model = Contract
+    pk_url_kwarg = "contract_id"
+    template_name = "contracts/contracts-delete.html"
+    success_url = reverse_lazy('contracts')
+
+
+class ContractUpdate(RequiredLogin, UpdateView):
+    model = Contract
+    form_class = ContractForm
+    pk_url_kwarg = "contract_id"
+    template_name = "contracts/contracts-edit.html"
+    success_url = reverse_lazy('contracts')
