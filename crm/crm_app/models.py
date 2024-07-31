@@ -5,7 +5,7 @@ from django.db import models as md
 from crm.settings import MEDIA_ROOT
 
 
-class Product(md.Model): # Услуги от компании
+class Product(md.Model):
 
     name = md.CharField(max_length=255, unique=True, db_index=True)
     description = md.TextField(blank=True)
@@ -16,11 +16,11 @@ class Product(md.Model): # Услуги от компании
         return self.name
 
 
-class Advertisement(md.Model): # Реклама на услугу
+class Advertisement(md.Model):
 
     name = md.CharField(max_length=255, unique=True, db_index=True)
-    leads_count = md.IntegerField(default=0) # Количество потенциальных ппользователей
-    customers_count = md.IntegerField(default=0) # Количество активных пользователей
+    leads_count = md.IntegerField(default=0)
+    customers_count = md.IntegerField(default=0)
     budget = md.DecimalField(max_digits=8, decimal_places=2)
     objects = md.Manager()
     profit = md.DecimalField(max_digits=20, decimal_places=2, default=0)
@@ -30,7 +30,7 @@ class Advertisement(md.Model): # Реклама на услугу
         return self.name
 
 
-class Lead(md.Model): # Потенциальные посетители
+class Lead(md.Model):
 
     last_name = md.CharField(max_length=255, db_index=True)
     first_name = md.CharField(max_length=255, db_index=True)
@@ -55,7 +55,7 @@ class Lead(md.Model): # Потенциальные посетители
             super().delete(using, keep_parents)
 
 
-class Customer(md.Model): # Активные посетители
+class Customer(md.Model):
     lead = md.OneToOneField("Lead", on_delete=md.CASCADE, related_name="customer")
     objects = md.Manager()
 
@@ -108,5 +108,3 @@ class Contract(md.Model):
             ad.save()
         else:
             super(Contract, self).save()
-
-

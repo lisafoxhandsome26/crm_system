@@ -23,12 +23,6 @@ def validate_name(value: str) -> str:
     return value
 
 
-def validate_dates(one_date):
-    now = datetime.date.today()
-    if one_date < now:
-        raise ValidationError("The dates were indicated incorrectly")
-
-
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
@@ -98,16 +92,6 @@ class ContractForm(forms.ModelForm):
             'product': forms.Select(attrs=attr),
             'customer': forms.Select(attrs=attr)
         }
-
-    def clean_start_date(self):
-        start_date = self.cleaned_data.get('start_date')
-        validate_dates(start_date)
-        return start_date
-
-    def clean_end_date(self):
-        end_date = self.cleaned_data.get('end_date')
-        validate_dates(end_date)
-        return end_date
 
     def clean_contract(self):
         contract = self.cleaned_data.get('contract')

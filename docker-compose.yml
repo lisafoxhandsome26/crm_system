@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  database:
+    container_name: "postgres"
+    image: postgres:15.2
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASS}
+      - DB_NAME=${DB_NAME}
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - ./db_data:/var/lib/postgresql/data
+
+  app:
+    container_name: "crm_app"
+    build:
+      dockerfile: ./Dockerfile
+    ports:
+      - "8000:8000"
+    restart: always
+    volumes:
+      - .env:/crm/crm/.env
+      - ./uploads/contracts:/crm/uploads/contracts
+      - ./migrations:/crm/crm_app/migrations
+    depends_on:
+      - database
+    entrypoint: sh -c "sleep 10 && python manage.py migrate && python manage.py add_superuser && gunicorn crm.wsgi:application --bind 0.0.0.0:8000"
