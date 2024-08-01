@@ -27,3 +27,17 @@ services:
     depends_on:
       - database
     entrypoint: sh -c "sleep 10 && python manage.py migrate && python manage.py add_superuser && gunicorn crm.wsgi:application --bind 0.0.0.0:8000"
+
+  frontend:
+    container_name: frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./frontend/static:/usr/share/nginx/html/static
+      - ./frontend/nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app

@@ -5,9 +5,9 @@ from crm.settings import env
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        username = env('USER')
-        email = env('EMAIL')
-        password = env('PASS')
+        username = env('USER', default='admin')
+        email = env('EMAIL', default='catsdogs@gmail.com')
+        password = env('PASS', default='aqnda337f')
         try:
             result = User.objects.get(username=username, email=email)
             self.stdout.write(self.style.SUCCESS(f'Superuser "{username}" already exist.'))
